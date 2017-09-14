@@ -45,7 +45,8 @@ def filter_by_field(entries, field, value):
         return [entry for entry in entries
                 if entry.datetime >= from_datetime
                 and entry.datetime <= to_datetime]
-    return [entry for entry in entries if entry.__dict__.get(field) == value]
+    return [entry for entry in entries
+            if entry.__dict__.get(field).lower() == value.lower()]
 
 
 @Profile
