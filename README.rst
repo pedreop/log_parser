@@ -44,8 +44,4 @@ Filter by Date Range (-d):
 Testing
 -------
 
-    pytest
-
-or
-
-    python3 -m pytest test_log_parser.py
+    tox 
