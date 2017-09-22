@@ -3,7 +3,7 @@ import argparse
 import re
 import sys
 from datetime import datetime
-from profile import Profile
+from profiler.profiler import Profile
 
 
 @Profile
@@ -86,8 +86,10 @@ def main(args):
     for key, value in Profile.all_functions().items():
         print(Profile.str(value))
 
-
-if __name__ == "__main__":
+def parse_args():
+    """
+    Parse arguments passed through from terminal
+    """
     parser = argparse.ArgumentParser(
         description='Import log file and return all or a subsection of lines')
     parser.add_argument('path', nargs='+', help='Log File Path')
@@ -101,5 +103,7 @@ if __name__ == "__main__":
                         help='Filter by Request ID')
     parser.add_argument('-d', '--date-range', nargs='?',
                         help='Filter by Date Range ("YYYY-MM-DD YYYY-MM-DD")')
-    args = parser.parse_args()
-    main(args)
+    return parser.parse_args()
+
+if __name__ == "__main__":
+    main(parse_args())
