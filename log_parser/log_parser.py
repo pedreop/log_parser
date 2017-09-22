@@ -2,108 +2,111 @@
 import argparse
 import re
 import sys
+from collections import OrderedDict
 from datetime import datetime
 from profiler.profiler import Profile
 
 
 @Profile
-class LogEntry:
-    """
-    The LogEntry class parses a log entry on creation. A Log Entry has a
-    Datetime, LogLevel, Session ID, Business ID, Request ID and a Message.
-    """
-
-    def __init__(self, entry):
-        self._parse(entry)
-
-    def __str__(self):
-        return ('{datetime:%Y-%m-%d %H:%M:%S} {loglevel} SID:{session_id} '
-                'BID:{business_id} RID:{request_id} {message}'
-                .format(**self.__dict__))
-
-    def _parse(self, entry):
-        """
-        Parse a Log Entry.
-        Order of Columns: DATE LOGLEVEL SESSION-ID BUSINESS-ID REQUEST-ID MSG
-        """
-        reg = r"(?P<datetime>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) " \
-            "(?P<loglevel>\w+) SID:(?P<session_id>\d+) " \
-            "BID:(?P<business_id>\d+) RID:(?P<request_id>\w+) '(.*)'"
-        datetime_string, self.loglevel, self.session_id, self.business_id, \
-            self.request_id, self.message = re.match(reg, entry).groups()
-        self.datetime = datetime.strptime(datetime_string, '%Y-%m-%d %H:%M:%S')
+def format_log_line(line):
+    """Format log line to its usual structure"""
+    return ('{datetime:%Y-%m-%d %H:%M:%S} {loglevel} SID:{session_id} '
+            'BID:{business_id} RID:{request_id} \'{message}\''
+            .format(**line))
 
 
 @Profile
-def filter_by_field(entries, field, value):
-    """Filter by LogLevel, SessionID, Business ID, Request ID and Date Range"""
-    if field == 'date_range':
-        from_datetime = datetime.strptime('{from_date} 00:00:00'.format(
-            from_date=value.split(' ')[0]), '%Y-%m-%d %H:%M:%S')
-        to_datetime = datetime.strptime('{to_date} 23:59:59'.format(
-            to_date=value.split(' ')[1]), '%Y-%m-%d %H:%M:%S')
-        return [entry for entry in entries
-                if entry.datetime >= from_datetime
-                and entry.datetime <= to_datetime]
-    return [entry for entry in entries
-            if entry.__dict__.get(field).lower() == value.lower()]
+def line_relevant_to_filter(line, kwargs):
+    """Check to see if the specified arguments are relevant to the line"""
+    for key, value in kwargs.items():
+        if key != 'date_range':
+            # If SID:, BID:, RID: is given in the arguments, remove it
+            if ':' in str(value):
+                value = value.split(':')[1]
+            if line[key].lower() != str(value).lower():
+                return False
+        else:
+            from_datetime = datetime.strptime('{from_date} 00:00:00'.format(
+                from_date=value.split(' ')[0]), '%Y-%m-%d %H:%M:%S')
+            to_datetime = datetime.strptime('{to_date} 23:59:59'.format(
+                to_date=value.split(' ')[1]), '%Y-%m-%d %H:%M:%S')
+            if line['datetime'] < from_datetime or \
+                    line['datetime'] > to_datetime:
+                return False
+    return True
 
 
 @Profile
-def load_entries(file_path):
-    """
-    Try to log entries from file_path, create log entry objects and add to
-    entries list
-    """
+def load_log_file(path):
+    """Return the next line of log file as required"""
     try:
-        entries = []
-        with open(file_path) as f:
-            for line in f:
-                entries.append(LogEntry(line))
-        return entries
+        with open(path) as f:
+            yield from f
     except FileNotFoundError:
         print('Loading Log Entries Failed')
         sys.exit(1)
 
 
-@Profile
-def main(args):
-    """
-    Intiate loading of entries, apply filters based on specified flags and
-    display to screen.
-    """
-    entries = load_entries(args.path[0])
-    for key, value in args._get_kwargs():
-        if value and key != 'path':
-            # If SID:, BID:, RID: is given in the arguments, remove it
-            if ':' in str(value):
-                value = value.split(':')[1]
-            entries = filter_by_field(entries, key, str(value))
-
-    for entry in entries:
-        print(entry)
-    # Print Profiling Results
-    for key, value in Profile.all_functions().items():
-        print(Profile.str(value))
-
 def parse_args():
-    """
-    Parse arguments passed through from terminal
-    """
+    """Parse arguments received (terminal). File path is passed separately"""
+    kwargs = {}
     parser = argparse.ArgumentParser(
         description='Import log file and return all or a subsection of lines')
     parser.add_argument('path', nargs='+', help='Log File Path')
     parser.add_argument('-l', '--loglevel', nargs='?',
                         help='Filter by Log Level (DEBUG, ERROR, WARN, ..)')
-    parser.add_argument('-b', '--business-id', type=int, nargs='?',
+    parser.add_argument('-b', '--business-id', nargs='?',
                         help='Filter by Business ID')
-    parser.add_argument('-s', '--session-id', type=int, nargs='?',
+    parser.add_argument('-s', '--session-id', nargs='?',
                         help='Filter by Session ID')
     parser.add_argument('-r', '--request-id', nargs='?',
                         help='Filter by Request ID')
     parser.add_argument('-d', '--date-range', nargs='?',
                         help='Filter by Date Range ("YYYY-MM-DD YYYY-MM-DD")')
-    return parser.parse_args()
+    for key, value in parser.parse_args()._get_kwargs():
+        if value:
+            if key != 'path':
+                kwargs[key] = value
+            else:
+                path = value[0]
+    return (path, kwargs)
+
+
+@Profile
+def parse_log_line(line):
+    """
+    Parse and return a log line.
+    Order of Columns: DATE LOGLEVEL SESSION-ID BUSINESS-ID REQUEST-ID MSG
+    """
+    keys = ['datetime', 'loglevel', 'session_id',
+            'business_id', 'request_id', 'message']
+    reg = r"(?P<datetime>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) " \
+        "(?P<loglevel>\w+) SID:(?P<session_id>\d+) " \
+        "BID:(?P<business_id>\d+) RID:(?P<request_id>\w+) '(.*)'"
+    values = iter(re.match(reg, line).groups())
+    log_line = OrderedDict((zip(keys, values)))
+    log_line['datetime'] = datetime.strptime(log_line['datetime'],
+                                             '%Y-%m-%d %H:%M:%S')
+    return log_line
+
+
+def main(path, kwargs={}):
+    """
+    Request line from log as required. Show all lines if no argument apart from
+    path is given. Check that a line is still relevant if a filtering argument
+    is specified.
+    """
+    for line in load_log_file(path):
+        if kwargs:
+            parsed_line = parse_log_line(line)
+            if line_relevant_to_filter(parsed_line, kwargs):
+                print(format_log_line(parsed_line))
+        else:
+            print(line.strip('\n'))
+    # Print Profiling Results
+    for key, value in Profile.all_functions().items():
+        print(Profile.str(value))
+
 
 if __name__ == "__main__":
-    main(parse_args())
+    main(*parse_args())
