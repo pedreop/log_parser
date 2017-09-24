@@ -35,4 +35,6 @@ jobs:
       - run:
           name: run tox
           command: |
-            python3 tox 
+            python3 -m venv venv
+            . venv/bin/activate
+            tox 
