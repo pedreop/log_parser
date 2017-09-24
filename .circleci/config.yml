@@ -19,7 +19,10 @@ jobs:
 
       - run:
           name: tox
-          command: tox
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            tox
 
       - save_cache:
           key: tox_cache-{{ checksum "tox.ini" }}
