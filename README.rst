@@ -1,7 +1,7 @@
 Log Parser
 =================
-Log Parser reads the log entries from a file, stores them in memory, filters the
-results if a flag is specified and prints out the result to screen.
+Log Parser reads the log entries from a file, filters the results
+if a flag is specified and prints out the result to screen.
 
 Filtering Options:
 
@@ -43,5 +43,6 @@ Filter by Date Range (-d):
 
 Testing
 -------
+Required: tox, tox-docker (pip install tox tox-docker)
 
-    tox 
+    tox

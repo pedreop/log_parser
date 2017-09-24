@@ -16,7 +16,7 @@ def format_log_line(line):
 
 
 @Profile
-def line_relevant_to_filter(line, kwargs):
+def line_relevant_to_query(line, kwargs):
     """Check to see if the specified arguments are relevant to the line"""
     for key, value in kwargs.items():
         if key != 'date_range':
@@ -38,7 +38,7 @@ def line_relevant_to_filter(line, kwargs):
 
 @Profile
 def load_log_file(path):
-    """Return the next line of log file as required"""
+    """Return the next line of the log file as required"""
     try:
         with open(path) as f:
             yield from f
@@ -83,7 +83,10 @@ def parse_log_line(line):
     reg = r"(?P<datetime>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) " \
         "(?P<loglevel>\w+) SID:(?P<session_id>\d+) " \
         "BID:(?P<business_id>\d+) RID:(?P<request_id>\w+) '(.*)'"
-    values = iter(re.match(reg, line).groups())
+    reg_match = re.match(reg, line)
+    if not reg_match:
+        return 'Invalid log line'
+    values = iter(reg_match.groups())
     log_line = OrderedDict((zip(keys, values)))
     log_line['datetime'] = datetime.strptime(log_line['datetime'],
                                              '%Y-%m-%d %H:%M:%S')
@@ -93,13 +96,13 @@ def parse_log_line(line):
 def main(path, kwargs={}):
     """
     Request line from log as required. Show all lines if no argument apart from
-    path is given. Check that a line is still relevant if a filtering argument
+    path is given. Check that a line is still relevant if a query argument
     is specified.
     """
     for line in load_log_file(path):
         if kwargs:
             parsed_line = parse_log_line(line)
-            if line_relevant_to_filter(parsed_line, kwargs):
+            if line_relevant_to_query(parsed_line, kwargs):
                 print(format_log_line(parsed_line))
         else:
             print(line.strip('\n'))

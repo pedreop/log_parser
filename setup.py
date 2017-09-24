@@ -14,9 +14,12 @@ setup(
     packages=['log_parser',
               'profiler'],
     install_requires=[
+        'coverage == 4.4.1',
         'pytest == 3.2.2',
+        'pytest-cov == 2.5.1',
         'statistics == 1.0.3.5',
-        'tox == 2.8.2'],
+        'tox == 2.8.2',
+        'tox-docker == 1.0.0'],
     entry_points={
         'console_scripts': [
             'log_parser=log_parser.log_parser:main',
