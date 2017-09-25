@@ -31,7 +31,7 @@ Filter by LogLevel (-l):
 
 Filter by Business ID (-b):
 
-    python3 log_parser example.log -b  319
+    log_parser example.log -b  319
 
 Filter by Session ID (-s):
 
