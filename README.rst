@@ -19,30 +19,34 @@ Log File Column Format
 Usage
 -----
 
-    python3 log_parser.py [LOG_FILE_PATH]
+    log_parser [LOG_FILE_PATH]
 
 Show All Results:
 
-    python3 log_parser.py example.log
+    log_parser example.log
 
 Filter by LogLevel (-l):
 
-    python3 log_parser.py example.log -l DEBUG
+    log_parser example.log -l DEBUG
 
 Filter by Business ID (-b):
 
-    python3 log_parser.py example.log -b  319
+    python3 log_parser example.log -b  319
 
 Filter by Session ID (-s):
 
-    python3 log_parser.py example.log -s 42111
+    log_parser example.log -s 42111
 
 Filter by Date Range (-d):
 
-    python3 log_parser.py example.log -d  '2012-09-14 2012-09-16'
+    log_parser example.log -d  '2012-09-14 2012-09-16'
 
 Testing
 -------
 Required: tox, tox-docker (pip install tox tox-docker)
 
     tox
+
+To use tox-docker, uncomment the following line in tox.ini
+
+    docker = python:3.6.2

@@ -1,7 +1,7 @@
 from setuptools import setup
 
 with open('README.rst') as f:
-    long_description=f.read()
+    long_description = f.read()
 
 setup(
     name='log_parser',
@@ -22,7 +22,7 @@ setup(
         'tox-docker == 1.0.0'],
     entry_points={
         'console_scripts': [
-            'log_parser=log_parser.log_parser:main',
+            'log_parser=log_parser.log_parser:parse_args_main',
         ],
     },
 )

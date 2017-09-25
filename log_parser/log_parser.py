@@ -111,5 +111,12 @@ def main(path, kwargs={}):
         print(Profile.str(value))
 
 
-if __name__ == "__main__":
+def parse_args_main():
+    """
+    This is the entry point so that arguments may be passed
+    """
     main(*parse_args())
+
+
+if __name__ == "__main__":
+    parse_args_main()

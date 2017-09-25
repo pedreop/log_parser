@@ -4,7 +4,7 @@ from datetime import datetime
 from distutils import dir_util
 from pytest import fixture
 from log_parser.log_parser import format_log_line, line_relevant_to_query, \
-    load_log_file, parse_args, parse_log_line, main
+    load_log_file, parse_args, parse_log_line, main, parse_args_main
 
 
 @fixture
@@ -147,3 +147,22 @@ def test_main(capsys, datadir):
         assert(len(out.split('\n\nFunction: ')[0].split('\n'))
                == value[1])  # Check Total Results count
         assert(len(err) == 0)  # Verify that there is no error returned
+
+
+def test_parse_args_main(capsys):
+    """
+    Ensure path argument is passed. Usage options should appear if no path
+    argument is passed
+    """
+    # With argument
+    sys.argv = ['log_parser/log_parser.py', 'example.log']
+    parse_args_main()
+    out, err = capsys.readouterr()
+    assert(len(err) == 0)
+    # Without argument
+    try:
+        sys.argv = ['log_parser/log_parser.py', ]
+        parse_args_main()
+    except:
+        out, err = capsys.readouterr()
+        assert err.startswith('usage')
