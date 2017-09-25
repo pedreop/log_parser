@@ -157,12 +157,12 @@ def test_parse_args_main(capsys):
     # With argument
     sys.argv = ['log_parser/log_parser.py', 'example.log']
     parse_args_main()
-    out, err = capsys.readouterr()
+    __, err = capsys.readouterr()
     assert(len(err) == 0)
     # Without argument
     try:
         sys.argv = ['log_parser/log_parser.py', ]
         parse_args_main()
     except:
-        out, err = capsys.readouterr()
+        __, err = capsys.readouterr()
         assert err.startswith('usage')
